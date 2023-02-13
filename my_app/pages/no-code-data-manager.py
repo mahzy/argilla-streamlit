@@ -1,3 +1,5 @@
+import os
+
 import argilla as rg
 import pandas as pd
 import spacy
@@ -12,10 +14,31 @@ streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
 
 st.image("https://docs.argilla.io/en/latest/_static/images/logo-light-mode.svg")
 st.title("No-code data manager")
-api_url = st.sidebar.text_input(
-    "API URL", value="https://dvilasuero-argilla-template-space.hf.space"
-)
-api_key = st.sidebar.text_input("API Key", value="team.apikey")
+
+# login workflow
+if os.environ.get("ARGILLA_API_URL") and os.environ.get("ARGILLA_API_KEY"):
+    rg.init(
+        api_url=os.environ.get("ARGILLA_API_URL"),
+        api_key=os.environ.get("ARGILLA_API_KEY"),
+    )
+    st.success(
+        f"Logged in at {os.environ.get('ARGILLA_API_URL')}, and workspace is"
+        f" {rg.get_workspace()}"
+    )
+else:
+    try:
+        api_url = st.sidebar.text_input(
+            "API URL", value="https://dvilasuero-argilla-template-space.hf.space"
+        )
+        api_key = st.sidebar.text_input("API Key", value="team.apikey")
+        rg.init(
+            api_url=api_url,
+            api_key=api_key,
+        )
+        st.success(f"Logged in at {api_url}")
+    except Exception:
+        st.error("Invalid API URL or API Key")
+
 action = st.sidebar.selectbox("Action", ["✍️ Upload Dataset", "💾 Download dataset"])
 
 if action == "✍️ Upload Dataset":
@@ -72,9 +95,14 @@ elif action == "💾 Download dataset":
         "API URL", value="https://dvilasuero-argilla-template-space.hf.space"
     )
     api_key = st.text_input("API Key", value="team.apikey")
-    if dataset_name_down:
-        rg.init(api_url=api_url, api_key=api_key)
-        dataset = rg.load(dataset_name_down).to_pandas()
+    rg.init(api_url=api_url, api_key=api_key)
+    query = st.text_input(
+        "Query to filter records (optional). See [query"
+        " syntax](https://docs.argilla.io/en/latest/guides/query_datasets.html)"
+    )
+    search = st.button("Search")
+    if search:
+        dataset = rg.load(dataset_name_down, query=query).to_pandas()
         st.write("Dataset preview:", dataset.head())
         st.download_button(
             label="Download as CSV",
@@ -88,5 +116,8 @@ elif action == "💾 Download dataset":
             file_name=f"{dataset_name_down}.json",
             mime="application/json",
         )
+    else:
+        st.info("Press the search button to load the dataset with the given query")
+
 
 streamlit_analytics.stop_tracking(save_to_json=f"{__file__}.json")
