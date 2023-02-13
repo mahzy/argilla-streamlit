@@ -86,19 +86,21 @@ if dataset:
             record = rg.TokenClassificationRecord(
                 text=text, tokens=tokens, annotation=annotation
             )
-            st.write(record)
+
         elif dataset_type == "Text2Text":
             annotation = st.text_area("Annotation")
             record = rg.Text2TextRecord(text=text, annotation=annotation)
         metadata = st.text_area("Metadata", value="{}")
         metadata = literal_eval(metadata)
         record.metadata = metadata
+        st.write(record)
     else:
         st.warning("Please enter text")
 
     save = st.button("Save")
     if save:
         rg.log(record, dataset)
+        st.success("Saved")
 else:
     st.warning("Please enter dataset name")
 

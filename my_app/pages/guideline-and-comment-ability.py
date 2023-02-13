@@ -137,6 +137,7 @@ if records:
     if save:
         rg.log(records, dataset)
         records = rg.load(dataset=dataset, limit=1, query=query)
+        st.success("Saved")
 else:
     st.warning("No records found")
 
