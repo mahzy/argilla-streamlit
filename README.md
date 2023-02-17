@@ -1,11 +1,11 @@
 ---
-title: Argilla Streamlit Customcs
+title: Argilla Streamlit Customs
 emoji: 👑 🏎️
 colorFrom: yellow
 colorTo: indigo
 sdk: streamlit
 sdk_version: 1.17.0
-app_file: my_app/app.py
+app_file: my_app/introduction.py
 pinned: false
 ---
 
