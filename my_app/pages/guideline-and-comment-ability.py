@@ -37,7 +37,11 @@ else:
     except Exception:
         st.error("Invalid API URL or API Key")
 
-
+st.error(
+    "WIP: Work in progress. Check our https://github.com/argilla-io/argilla-streamlit"
+    " to open a PR."
+)
+st.stop()
 dataset = st.text_input("Dataset Name")
 
 if dataset:
