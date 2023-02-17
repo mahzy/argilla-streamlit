@@ -46,7 +46,7 @@ if dataset:
     if records:
         record = records[0]
         if isinstance(record, rg.TokenClassificationRecord) or isinstance(
-            record, rg.TokenClassificationRecord
+            record, rg.TextClassificationRecord
         ):
             labels = st.text_input("Labels")
             split_labels = labels.split(",")
@@ -70,75 +70,123 @@ if not query:
 
 records = rg.load(name=dataset, limit=1, query=query)
 
-if records:
-    records = records[0]
 
-    if isinstance(records, rg.TokenClassificationRecord):
-        if records.annotation:
-            old_annotation = [
-                {
-                    "start": an[1],
-                    "end": an[2],
-                    "tag": an[0],
-                    "text": records.text[an[1] : an[2]],
-                }
-                for an in records.annotation
+def form_callback(dataset, query):
+    rg.log(st.session_state.rec, dataset)
+    st.session_state.rec = rg.load(name=dataset, limit=1, query=query)[0]
+    if st.session_state.rec.inputs is not None:
+        st.session_state.inputs = "\n".join(
+            [
+                f"**{key}** \n\n {value}"
+                for key, value in st.session_state.rec.inputs.items()
             ]
-        else:
-            old_annotation = None
-        annotation = text_highlighter(
-            text=records.text,
-            labels=split_labels,
-            annotations=old_annotation,
         )
-        annotation = [(an["tag"], an["start"], an["end"]) for an in annotation]
+    else:
+        st.session_state.inputs = st.session_state.rec.text
+    st.session_state.comment = st.session_state.rec.metadata.get("comment", "")
+    if st.session_state.rec.annotation:
+        st.session_state["annotation"] = st.session_state.rec.annotation
 
-    elif isinstance(records, rg.TextClassificationRecord):
-        if records.inputs is not None:
-            st.write(records.inputs)
-        else:
-            st.write(records.text)
+    st.success("Saved")
 
-        if records.multi_label:
-            annotation = st.multiselect("annotation", split_labels, records.annotation)
-        else:
-            annotation = st.radio(
-                "annotation",
-                split_labels,
-                split_labels.index(records.annotation),
-                horizontal=True,
+
+if records:
+    with st.form(key="my_form"):
+        records = records[0]
+        st.session_state.rec = records
+        if isinstance(st.session_state.rec, rg.TokenClassificationRecord):
+            if st.session_state.rec.annotation:
+                old_annotation = [
+                    {
+                        "start": an[1],
+                        "end": an[2],
+                        "tag": an[0],
+                        "text": st.session_state.rec.text[an[1] : an[2]],
+                    }
+                    for an in st.session_state.rec.annotation
+                ]
+            else:
+                old_annotation = None
+            annotation = text_highlighter(
+                text=st.session_state.rec.text,
+                labels=split_labels,
+                annotations=old_annotation,
             )
+            formatted_annotation = [
+                (an["tag"], an["start"], an["end"]) for an in annotation
+            ]
 
-    elif isinstance(records, rg.Text2TextRecord):
-        st.write(records.text)
-        st.text_area(records.annotation)
+        elif isinstance(st.session_state.rec, rg.TextClassificationRecord):
+            if st.session_state.rec.inputs is not None:
+                st.text_area(
+                    "Text",
+                    value="\n".join(
+                        [
+                            f"{key}: {value}"
+                            for key, value in st.session_state.rec.inputs.items()
+                        ]
+                    ),
+                    key="inputs",
+                    disabled=True,
+                )
+            else:
+                st.text_area(
+                    "Text", value=st.session_state.rec.text, key="inputs", disabled=True
+                )
 
-    try:
-        records.__class__(records.text, annotation)
-        records.annotation = annotation
-    except Exception as e:
-        st.write(e)
+            if st.session_state.rec.multi_label:
+                annotation = st.multiselect(
+                    "annotation",
+                    split_labels,
+                    st.session_state.rec.annotation,
+                    key="annotation",
+                )
+            else:
+                if st.session_state.rec.annotation:
+                    if st.session_state.rec.annotation in split_labels:
+                        index = split_labels.index(st.session_state.rec.annotation)
+                    else:
+                        st.error(st.session_state.rec.annotation + " not in labels")
+                else:
+                    index = 0
+                annotation = st.radio(
+                    "annotation",
+                    split_labels,
+                    index,
+                    horizontal=True,
+                    key="annotation",
+                )
 
-    if records.metadata:
-        if "comment" in records.metadata:
-            input_comment = records.metadata["comment"]
+        elif isinstance(st.session_state.rec, rg.Text2TextRecord):
+            st.write(st.session_state.rec.text)
+            st.text_area(st.session_state.rec.annotation)
+
+        try:
+            st.session_state.rec.__class__(**st.session_state.rec.__dict__)
+            st.session_state.rec.annotation = annotation
+        except Exception as e:
+            st.write(e)
+
+        if st.session_state.rec.metadata:
+            if "comment" in st.session_state.rec.metadata:
+                input_comment = st.session_state.rec.metadata["comment"]
+            else:
+                input_comment = ""
         else:
             input_comment = ""
-    else:
-        input_comment = ""
 
-    comment = st.text_input("comment", value=input_comment)
-    if records.metadata:
-        records.metadata["comment/note"] = comment
-    else:
-        records.metadata = {"comment": comment}
+        comment = st.text_input("comment", value=input_comment, key="comment")
+        if st.session_state.rec.metadata:
+            st.session_state.rec.metadata["comment/note"] = comment
+        else:
+            st.session_state.rec.metadata = {"comment": comment}
 
-    save = st.button("Save")
-    if save:
-        rg.log(records, dataset)
-        records = rg.load(dataset=dataset, limit=1, query=query)
-        st.success("Saved")
+        save = st.form_submit_button(
+            "Save", on_click=form_callback, args=(dataset, query)
+        )
+
 else:
     st.warning("No records found")
+
 
 streamlit_analytics.stop_tracking(save_to_json=f"{__file__}.json")
