@@ -7,6 +7,11 @@ sdk: streamlit
 sdk_version: 1.17.0
 app_file: my_app/introduction.py
 pinned: false
+fullWidth: true
+tags:
+  - argilla
+  - streamlit
+  - no-code
 ---
 
 Check out the configuration reference at https://huggingface.co/docs/hub/spaces-config-reference
