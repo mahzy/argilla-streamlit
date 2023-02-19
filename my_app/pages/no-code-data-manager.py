@@ -5,7 +5,7 @@ import pandas as pd
 import spacy
 import streamlit as st
 import streamlit_analytics
-from _utils import login_workflow
+from utils.commons import login_workflow
 
 st.set_page_config(
     page_title="Argilla NoCode Data Manager", page_icon="💾", layout="wide"

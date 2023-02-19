@@ -5,9 +5,9 @@ import argilla as rg
 import spacy
 import streamlit as st
 import streamlit_analytics
-from _utils import login_workflow
 from streamlit_tags import st_tags
 from text_highlighter import text_highlighter
+from utils.commons import login_workflow
 
 st.set_page_config(
     page_title="Argilla - UI record creator",
