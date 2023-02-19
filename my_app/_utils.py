@@ -5,10 +5,13 @@ import streamlit as st
 
 
 def login_workflow():
+    api_url = None
     if os.environ.get("ARGILLA_API_URL") and os.environ.get("ARGILLA_API_KEY"):
+        api_url = os.environ.get("ARGILLA_API_URL")
+        api_key = os.environ.get("ARGILLA_API_KEY")
         rg.init(
-            api_url=os.environ.get("ARGILLA_API_URL"),
-            api_key=os.environ.get("ARGILLA_API_KEY"),
+            api_url=api_url,
+            api_key=api_key,
         )
         st.success(
             f"Logged in at {os.environ.get('ARGILLA_API_URL')}, and workspace is"
@@ -31,7 +34,8 @@ def login_workflow():
             )
         except Exception:
             st.error(
-                "Invalid API URL or API Key. Use a correct manual input or even better,"
-                " set `ARGILLA_API_URL` and `ARGILLA_API_KEY` as environment variables"
-                " to avoid this step."
+                "Invalid API URL or API Key. Use a correct manual input or, even"
+                " better, set `ARGILLA_API_URL` and `ARGILLA_API_KEY` as environment"
+                " variables to avoid this step."
             )
+    return api_url
