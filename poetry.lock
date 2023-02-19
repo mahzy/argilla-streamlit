@@ -1213,6 +1213,17 @@ pandas = "*"
 streamlit = ">=0.84.0"
 
 [[package]]
+name = "streamlit-tags"
+version = "1.2.8"
+description = "Tags custom component for Streamlit"
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+streamlit = ">=0.63"
+
+[[package]]
 name = "text-highlighter"
 version = "0.0.11"
 description = "Streamlit component for text highlighting"
@@ -1451,7 +1462,7 @@ testing = ["flake8 (<5)", "func-timeout", "jaraco.functools", "jaraco.itertools"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.9,<3.9.7 || >3.9.7,<4.0"
-content-hash = "1b469f18c53d9d50b8ae4d45985caa09d818e5e0ae8e0c30b88b944a2b5d8710"
+content-hash = "5704801b969899948882606799cb7f2e14dc6cdeeaba6c8408b94a23ca7a7ae3"
 
 [metadata.files]
 aiohttp = [
@@ -2640,6 +2651,10 @@ streamlit = [
 streamlit-analytics = [
     {file = "streamlit-analytics-0.4.1.tar.gz", hash = "sha256:6168e7f2af9a39a33911a2f2e6f42b6eb4220f3cc983821e0271e2068c7747e9"},
     {file = "streamlit_analytics-0.4.1-py3-none-any.whl", hash = "sha256:43276c623509c3665374f839f28adc0dcd39c33b1cea64d4d8ea43e8038ff80d"},
+]
+streamlit-tags = [
+    {file = "streamlit_tags-1.2.8-py3-none-any.whl", hash = "sha256:c71b10666f3fce67d8e0b3c089aa50dc48830d310223fb88005b08f157586f95"},
+    {file = "streamlit_tags-1.2.8.tar.gz", hash = "sha256:9ea46b21f206dc73164e59e3c800a96c863c90af57afde20115f001a6d986583"},
 ]
 text-highlighter = [
     {file = "text-highlighter-0.0.11.tar.gz", hash = "sha256:bfd2d2fab45be4ff9c1da3298c551ce6b466cf6e2dacc657b2cc2867514b30f4"},

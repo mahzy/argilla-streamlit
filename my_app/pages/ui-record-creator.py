@@ -6,6 +6,7 @@ import spacy
 import streamlit as st
 import streamlit_analytics
 from _utils import login_workflow
+from streamlit_tags import st_tags
 from text_highlighter import text_highlighter
 
 st.set_page_config(
@@ -29,11 +30,9 @@ if dataset:
         "Dataset Type", ["Text Classification", "Token Classification", "Text2Text"]
     )
     if dataset_type in ["Text Classification", "Token Classification"]:
-        labels = st.text_input("Labels")
-        split_labels = labels.split(",")
-        split_labels = [label.strip() for label in split_labels]
+        labels = st_tags(label="Labels", text="Press enter to add more")
 
-        if not any(split_labels):
+        if not any(labels):
             st.warning("No labels provided")
             st.stop()
         if dataset_type == "Text Classification":
@@ -45,11 +44,9 @@ if dataset:
     if text:
         if dataset_type == "Text Classification":
             if multi_label:
-                annotation = st.multiselect(
-                    "annotation", split_labels, default=split_labels
-                )
+                annotation = st.multiselect("annotation", labels, default=labels)
             else:
-                annotation = st.radio("annotation", split_labels, horizontal=True)
+                annotation = st.radio("annotation", labels, horizontal=True)
 
             record = rg.TextClassificationRecord(
                 text=text, annotation=annotation, multi_label=multi_label
@@ -57,7 +54,7 @@ if dataset:
         elif dataset_type == "Token Classification":
             annotation = text_highlighter(
                 text=text,
-                labels=split_labels,
+                labels=labels,
             )
             if annotation:
                 annotation = [(an["tag"], an["start"], an["end"]) for an in annotation]

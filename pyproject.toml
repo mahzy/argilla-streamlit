@@ -16,6 +16,8 @@ streamlit-analytics = "^0.4.1"
 watchdog = "^2.2.1"
 text-highlighter = "^0.0.11"
 datasets = "^2.9.0"
+huggingface-hub = "^0.12.1"
+streamlit-tags = "^1.2.8"
 
 
 [build-system]
