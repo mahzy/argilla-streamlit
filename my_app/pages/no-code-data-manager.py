@@ -19,7 +19,7 @@ api_url = argilla_login_flow("No-code data manager")
 st.write(
     """
     This page allows you to upload and download datasets from Argilla without using any code!
-    In the background it uses `argilla.log()` and `pandas`. This requires
+    In the background it uses `argilla.log()` and `pandas`. This requires you to have a valid `.csv`, `.xlsx` or `.xlsx`.
     """
 )
 
