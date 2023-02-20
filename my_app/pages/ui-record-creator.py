@@ -1,4 +1,3 @@
-import os
 from ast import literal_eval
 
 import argilla as rg
@@ -7,7 +6,7 @@ import streamlit as st
 import streamlit_analytics
 from streamlit_tags import st_tags
 from text_highlighter import text_highlighter
-from utils.commons import login_workflow
+from utils.commons import argilla_login_flow
 
 st.set_page_config(
     page_title="Argilla - UI record creator",
@@ -16,11 +15,9 @@ st.set_page_config(
 )
 
 streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
-st.image("https://docs.argilla.io/en/latest/_static/images/logo-light-mode.svg")
-st.title("UI record creator")
 
-# loging workflow
-login_workflow()
+
+argilla_login_flow("UI record creator")
 
 nlp = spacy.blank("en")
 dataset = st.text_input("Dataset Name")

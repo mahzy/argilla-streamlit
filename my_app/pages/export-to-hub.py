@@ -4,7 +4,7 @@ import argilla as rg
 import datasets
 import streamlit as st
 import streamlit_analytics
-from utils.commons import login_workflow
+from utils.commons import argilla_login_flow, hf_login_flow
 
 st.set_page_config(
     page_title="Argilla - Hub Exporter",
@@ -13,26 +13,9 @@ st.set_page_config(
 )
 
 streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
-st.image("https://docs.argilla.io/en/latest/_static/images/logo-light-mode.svg")
-st.title("Hub Exporter")
 
-# login workflow
-login_workflow()
-
-hf_auth_token = os.environ.get("HF_AUTH_TOKEN", "")
-if not hf_auth_token:
-    hf_auth_token = st.sidebar.text_input(
-        "HuggingFace [User Access Tokens](https://huggingface.co/settings/tokens)",
-        os.environ.get("HF_AUTH_TOKEN", ""),
-    )
-if not hf_auth_token:
-    st.error(
-        "Please provide a HuggingFace [User Access"
-        " Tokens](https://huggingface.co/settings/tokens) or set `HF_AUTH_TOKEN` as"
-        " environment variable"
-    )
-    st.stop()
-
+argilla_login_flow("Hub Exporter")
+hf_auth_token, api = hf_login_flow()
 
 st.write(
     """
@@ -41,10 +24,23 @@ st.write(
     """
 )
 
+user_info = api.whoami()
+namespaces = [user_info["name"]] + [org["name"] for org in user_info["orgs"]]
+
 dataset_argilla = st.text_input("Dataset Argilla Name")
-dataset_huggingface = st.text_input("Dataset HuggingFace Name", dataset_argilla)
+target_namespace = st.selectbox(
+    "Target HF organization for saving trained model",
+    options=namespaces,
+    help="the namespace where the trained model should end up",
+)
+dataset_huggingface = st.text_input(
+    "Dataset HuggingFace Name", f"{target_namespace}/{dataset_argilla}"
+)
 
 if dataset_argilla:
+    dataset_huggingface = st.text_input(
+        "Dataset HuggingFace Name", f"{target_namespace}/{dataset_argilla}"
+    )
     try:
         query = st.text_input("Query", value="status: Validated")
         with st.spinner(text="Loading dataset..."):
