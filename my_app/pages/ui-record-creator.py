@@ -16,8 +16,14 @@ st.set_page_config(
 
 streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
 
-
 argilla_login_flow("UI record creator")
+
+st.write(
+    """
+    This page allows you to create and annotate individual record from Argilla without using any code!
+    In the background it uses `argilla.log()` and `TextClassificationRecord`, `TokenClassificationRecord`, and `Text2TextRecord`.
+    """
+)
 
 nlp = spacy.blank("en")
 dataset = st.text_input("Dataset Name")
