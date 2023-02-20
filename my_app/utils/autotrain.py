@@ -41,6 +41,7 @@ def schedule_retrain(
     input_dataset,
     input_model,
     autotrain_project_prefix,
+    project_id,
     task_id,
 ):
     payload = AutoTrainInfo(
@@ -49,22 +50,23 @@ def schedule_retrain(
         input_dataset=input_dataset,
         input_model=input_model,
         autotrain_project_prefix=autotrain_project_prefix,
+        project_id=project_id,
         task_id=task_id,
     )
     # Create the autotrain project
-    AutoTrain.list_projects(payload)
-    # try:
-    #     project = AutoTrain.create_project(payload)
-    #     payload.project_id = project["id"]
-    #     AutoTrain.add_data(payload)
-    #     AutoTrain.start_processing(payload)
-    # except requests.HTTPError as err:
-    #     print("ERROR while requesting AutoTrain API:")
-    #     print(f"  code: {err.response.status_code}")
-    #     print(f"  {err.response.json()}")
-    #     raise
-    # # Notify in the community tab
-    # notify_success(payload)
+    try:
+        if project_id is None:
+            project = AutoTrain.create_project(payload)
+            payload.project_id = project["id"]
+        AutoTrain.add_data(payload)
+        AutoTrain.start_processing(payload)
+    except requests.HTTPError as err:
+        print("ERROR while requesting AutoTrain API:")
+        print(f"  code: {err.response.status_code}")
+        print(f"  {err.response.json()}")
+        raise
+    # Notify in the community tab
+    notify_success(payload)
 
     return {"processed": True}
 
@@ -101,12 +103,11 @@ class AutoTrain:
 
     @staticmethod
     def add_data(payload: AutoTrainInfo):
-        requests.post(
+        requests.put(
             f"{AUTOTRAIN_API_URL}/projects/{payload.project_id}/data/dataset",
             json={
                 "dataset_id": payload.input_dataset,
                 "dataset_split": "train",
-                "split": 4,
                 "col_mapping": {
                     "text": "text",
                     "label": "target",
