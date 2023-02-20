@@ -74,8 +74,8 @@ def hf_login_flow():
     if not hf_auth_token:
         st.error(
             "Please provide a HuggingFace [User Access"
-            " Tokens](https://huggingface.co/settings/tokens) or set `HF_AUTH_TOKEN` as"
-            " environment variable"
+            " Tokens](https://huggingface.co/settings/tokens) in the sidebar or set"
+            " `HF_AUTH_TOKEN` as environment variable"
         )
         st.stop()
     api = HfApi(token=hf_auth_token)

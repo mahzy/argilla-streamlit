@@ -15,7 +15,6 @@ st.set_page_config(
 streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
 
 argilla_login_flow("Hub Exporter")
-hf_auth_token, api = hf_login_flow()
 
 st.write(
     """
@@ -23,6 +22,9 @@ st.write(
     In the background it uses `argilla.load().prepare_for_training()` and `datasets.push_to_hub()`.
     """
 )
+
+hf_auth_token, api = hf_login_flow()
+
 
 user_info = api.whoami()
 namespaces = [user_info["name"]] + [org["name"] for org in user_info["orgs"]]
