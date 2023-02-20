@@ -4,7 +4,7 @@ import argilla as rg
 import datasets
 import streamlit as st
 import streamlit_analytics
-from _utils import login_workflow
+from utils.commons import login_workflow
 
 st.set_page_config(
     page_title="Argilla - Hub Exporter",
@@ -33,6 +33,14 @@ if not hf_auth_token:
     )
     st.stop()
 
+
+st.write(
+    """
+    This page allows you to share your dataset from Argilla to HuggingFace Hub without requiring any code!
+    In the background it uses `argilla.load().prepare_for_training()` and `datasets.push_to_hub()`.
+    """
+)
+
 dataset_argilla = st.text_input("Dataset Argilla Name")
 dataset_huggingface = st.text_input("Dataset HuggingFace Name", dataset_argilla)
 
@@ -41,7 +49,7 @@ if dataset_argilla:
         query = st.text_input("Query", value="status: Validated")
         with st.spinner(text="Loading dataset..."):
             ds = rg.load(dataset_argilla, query=query)
-        st.write("Below is a dataframe", ds.to_pandas().head(5))
+        st.write("Below is a subset of the dataframe", ds.to_pandas().head(5))
         train_size = st.number_input(
             "Train size", value=0.8, min_value=0.0, max_value=1.0
         )
@@ -61,5 +69,7 @@ if dataset_argilla:
     except Exception as e:
         st.error("Invalid dataset name or query")
         st.write(e)
+else:
+    st.warning("Please enter a dataset name")
 
 streamlit_analytics.stop_tracking(save_to_json=f"{__file__}.json")
