@@ -9,3 +9,5 @@ streamlit-tags
 streamlit-datalist
 openpyxl
 xlsxwriter
+streamlit-plotly-events
+umap-learn
