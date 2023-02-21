@@ -32,12 +32,13 @@ st.write(
     """
 )
 
-dataset_argilla = st.text_input("Argilla Datasset Name", "ray-summit")
+dataset_argilla = st.text_input("Argilla Dataset Name", "ray-summit")
 labels = st_tags(label="Labels", text="Press enter to add more")
 
 st.info(
-    "Information is cached but use a subset of the data through setting a number of"
-    " recrods or querying."
+    "Information is cached but it is recommended to use a subset of the data through"
+    " setting a maximum number of records or by specifying the selection through"
+    " querying."
 )
 fast = st.checkbox("Fast mode (PCA) or accurate mode (UMAP)", value=True)
 n_records = st.number_input(
