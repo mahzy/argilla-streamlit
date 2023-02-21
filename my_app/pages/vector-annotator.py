@@ -32,13 +32,22 @@ st.write(
     """
 )
 
-dataset_argilla = st.text_input("Dataset Argilla Name", "ray-summit")
+dataset_argilla = st.text_input("Argilla Datasset Name", "ray-summit")
 labels = st_tags(label="Labels", text="Press enter to add more")
-n_records = st.number_input(
-    "Max number of records", min_value=1000, max_value=10000, value=2000
+
+st.info(
+    "Information is cached but use a subset of the data through setting a number of"
+    " recrods or querying."
 )
-fast = st.checkbox("Fast mode (PCA) if disabled uses UMAP", value=True)
+fast = st.checkbox("Fast mode (PCA) or accurate mode (UMAP)", value=True)
+n_records = st.number_input(
+    "Max number of records to query and analyze",
+    min_value=1000,
+    max_value=10000,
+    value=2000,
+)
 query = st.text_input("Query")
+
 if dataset_argilla and labels:
 
     @st.cache(allow_output_mutation=True)

@@ -29,19 +29,16 @@ hf_auth_token, api = hf_login_flow()
 user_info = api.whoami()
 namespaces = [user_info["name"]] + [org["name"] for org in user_info["orgs"]]
 
-dataset_argilla = st.text_input("Dataset Argilla Name")
+dataset_argilla = st.text_input("Argilla Dataset Name")
 target_namespace = st.selectbox(
     "Target HF organization for saving trained model",
     options=namespaces,
     help="the namespace where the trained model should end up",
 )
-dataset_huggingface = st.text_input(
-    "Dataset HuggingFace Name", f"{target_namespace}/{dataset_argilla}"
-)
 
 if dataset_argilla:
     dataset_huggingface = st.text_input(
-        "Dataset HuggingFace Name", f"{target_namespace}/{dataset_argilla}"
+        "HuggingFace Dataset Name", f"{target_namespace}/{dataset_argilla}"
     )
     try:
         query = st.text_input("Query", value="status: Validated")
