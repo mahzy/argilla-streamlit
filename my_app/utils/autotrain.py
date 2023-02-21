@@ -88,7 +88,7 @@ class AutoTrain:
             json={
                 "username": payload.target_namespace,
                 "proj_name": f"{payload.autotrain_project_prefix}",
-                "task": payload.task_id,  # image-multi-class-classification
+                "task": payload.task_id,
                 "config": {
                     "hub-model": payload.input_model,
                     "max_models": 1,
@@ -103,7 +103,7 @@ class AutoTrain:
 
     @staticmethod
     def add_data(payload: AutoTrainInfo):
-        requests.put(
+        requests.post(
             f"{AUTOTRAIN_API_URL}/projects/{payload.project_id}/data/dataset",
             json={
                 "dataset_id": payload.input_dataset,
