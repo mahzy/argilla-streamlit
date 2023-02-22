@@ -1,4 +1,3 @@
-import os
 from ast import literal_eval
 
 import argilla as rg
@@ -7,7 +6,7 @@ import streamlit as st
 import streamlit_analytics
 from streamlit_tags import st_tags
 from text_highlighter import text_highlighter
-from utils.commons import login_workflow
+from utils.commons import ArgillaSingleton, argilla_login_flow, get_dataset_list
 
 st.set_page_config(
     page_title="Argilla - UI record creator",
@@ -16,33 +15,61 @@ st.set_page_config(
 )
 
 streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
-st.image("https://docs.argilla.io/en/latest/_static/images/logo-light-mode.svg")
-st.title("UI record creator")
 
-# loging workflow
-login_workflow()
+api_url, api_key = argilla_login_flow("UI record creator")
+
+st.write(
+    """
+    This page allows you to create and annotate individual record from Argilla without using any code!
+    In the background it uses `argilla.log()` and `TextClassificationRecord`, `TokenClassificationRecord`, and `Text2TextRecord`.
+    """
+)
 
 nlp = spacy.blank("en")
-dataset = st.text_input("Dataset Name")
+datasets_list = [
+    f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list(api_url, api_key)
+]
+dataset_argilla = st.selectbox(
+    "Argilla Dataset Name", options=["other"] + datasets_list
+)
+if dataset_argilla == "other":
+    ArgillaSingleton.init(api_url, api_key)
+    dataset_argilla_name = st.text_input("New Dataset Name")
+    labels = []
+    disabled = False
+    options = ["TextClassification", "TokenClassification", "Text2Text"]
+else:
+    dataset_argilla_name = dataset_argilla.split("/")[-1]
+    dataset_argilla_workspace = dataset_argilla.split("/")[0]
+    rg.set_workspace(dataset_argilla_workspace)
+    for dataset in get_dataset_list(api_url, api_key):
+        if (
+            dataset["name"] == dataset_argilla_name
+            and dataset["owner"] == dataset_argilla_workspace
+        ):
+            labels = dataset["labels"]
+            dataset_type = dataset["task"]
+            disabled = True
+            options = [dataset_type]
+            break
 
-if dataset:
-    dataset_type = st.selectbox(
-        "Dataset Type", ["Text Classification", "Token Classification", "Text2Text"]
-    )
-    if dataset_type in ["Text Classification", "Token Classification"]:
-        labels = st_tags(label="Labels", text="Press enter to add more")
+
+if dataset_argilla_name:
+    dataset_type = st.selectbox("Dataset Type", options, disabled=disabled)
+    if dataset_type in ["TextClassification", "TokenClassification"]:
+        labels = st_tags(label="Labels", value=labels, text="Press enter to add more")
 
         if not any(labels):
             st.warning("No labels provided")
             st.stop()
-        if dataset_type == "Text Classification":
+        if dataset_type == "TextClassification":
             multi_label = st.radio("multi label", [False, True], horizontal=True)
         else:
             multi_label = False
     text = st.text_area("Text")
 
     if text:
-        if dataset_type == "Text Classification":
+        if dataset_type == "TextClassification":
             if multi_label:
                 annotation = st.multiselect("annotation", labels, default=labels)
             else:
@@ -51,7 +78,7 @@ if dataset:
             record = rg.TextClassificationRecord(
                 text=text, annotation=annotation, multi_label=multi_label
             )
-        elif dataset_type == "Token Classification":
+        elif dataset_type == "TokenClassification":
             annotation = text_highlighter(
                 text=text,
                 labels=labels,
@@ -76,7 +103,7 @@ if dataset:
 
     save = st.button("Save")
     if save:
-        rg.log(record, dataset)
+        rg.log(record, dataset_argilla_name)
         st.success("Saved")
 else:
     st.warning("Please enter dataset name")

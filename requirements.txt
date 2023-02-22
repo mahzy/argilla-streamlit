@@ -7,3 +7,7 @@ text-highlighter
 huggingface_hub==0.11.*
 streamlit-tags
 streamlit-datalist
+openpyxl
+xlsxwriter
+streamlit-plotly-events
+umap-learn

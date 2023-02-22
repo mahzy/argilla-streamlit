@@ -12,6 +12,9 @@ st.write("# Welcome to Argilla Streamlit! 👋")
 
 st.sidebar.success("Select a demo above.")
 
+st.success(
+    "PRs are welcome! 🙌 [Github repo](https://github.com/argilla-io/argilla-streamlit)"
+)
 st.markdown(
     """
     Argilla is a production-ready framework for building and improving datasets for NLP projects. This repo is focused on extended UI functionalities for Argilla. 👑
