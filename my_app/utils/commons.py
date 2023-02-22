@@ -97,14 +97,26 @@ def hf_login_flow():
 
 def get_dataset_list():
     client = active_client()._client
-    url = "{}/api/datasets".format(client.base_url)
+    try:
+        url = "{}/api/datasets".format(client.base_url)
 
-    response = httpx.get(
-        url=url,
-        headers=client.get_headers(),
-        cookies=client.get_cookies(),
-        timeout=client.get_timeout(),
-    )
+        response = httpx.get(
+            url=url,
+            headers=client.get_headers(),
+            cookies=client.get_cookies(),
+            timeout=client.get_timeout(),
+        )
+        response.raise_for_status()
+    except Exception:
+        url = "{}/api/datasets/".format(client.base_url)
+
+        response = httpx.get(
+            url=url,
+            headers=client.get_headers(),
+            cookies=client.get_cookies(),
+            timeout=client.get_timeout(),
+        )
+        response.raise_for_status()
 
     dataset_overview = []
     for dataset in response.json():
