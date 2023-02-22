@@ -4,7 +4,7 @@ import argilla as rg
 import datasets
 import streamlit as st
 import streamlit_analytics
-from utils.commons import argilla_login_flow, hf_login_flow
+from utils.commons import argilla_login_flow, get_dataset_list, hf_login_flow
 
 st.set_page_config(
     page_title="Argilla - Hub Exporter",
@@ -28,8 +28,10 @@ hf_auth_token, api = hf_login_flow()
 
 user_info = api.whoami()
 namespaces = [user_info["name"]] + [org["name"] for org in user_info["orgs"]]
-
-dataset_argilla = st.text_input("Argilla Dataset Name")
+datasets_list = [f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list()]
+dataset_argilla = st.selectbox("Argilla Dataset Name", options=datasets_list)
+dataset_argilla_name = dataset_argilla.split("/")[-1]
+dataset_argilla_workspace = dataset_argilla.split("/")[0]
 target_namespace = st.selectbox(
     "Target HF organization for saving trained model",
     options=namespaces,
@@ -38,12 +40,14 @@ target_namespace = st.selectbox(
 
 if dataset_argilla:
     dataset_huggingface = st.text_input(
-        "HuggingFace Dataset Name", f"{target_namespace}/{dataset_argilla}"
+        "HuggingFace Dataset Name",
+        f"{target_namespace}/{dataset_argilla_name}",
     )
     try:
         query = st.text_input("Query", value="status: Validated")
         with st.spinner(text="Loading dataset..."):
-            ds = rg.load(dataset_argilla, query=query)
+            rg.set_workspace(dataset_argilla_workspace)
+            ds = rg.load(dataset_argilla_name, query=query)
         st.write("Below is a subset of the dataframe", ds.to_pandas().head(5))
         train_size = st.number_input(
             "Train size", value=0.8, min_value=0.0, max_value=1.0

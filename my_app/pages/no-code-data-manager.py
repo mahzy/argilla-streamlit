@@ -6,7 +6,7 @@ import spacy
 import streamlit as st
 import streamlit_analytics
 import xlsxwriter
-from utils.commons import argilla_login_flow
+from utils.commons import argilla_login_flow, get_dataset_list
 
 st.set_page_config(
     page_title="Argilla NoCode Data Manager", page_icon="💾", layout="wide"
@@ -28,7 +28,7 @@ action = st.sidebar.selectbox("Action", ["✍️ Upload Dataset", "💾 Download
 if action == "✍️ Upload Dataset":
     st.subheader(action)
     dataset_type = st.selectbox(
-        "Dataset Type", ["Text Classification", "Token Classification", "Text2Text"]
+        "Dataset Type", ["TextClassification", "TokenClassification", "Text2Text"]
     )
 
     dataset_name = st.text_input("Dataset Name", key="dataset_name")
@@ -48,7 +48,7 @@ if action == "✍️ Upload Dataset":
             st.write("Dataset preview:", df.head())
             string_columns = [col for col in df.columns if df[col].dtype == "object"]
             if len(string_columns) > 0:
-                if dataset_type == "Text Classification":
+                if dataset_type == "TextClassification":
                     column_select = st.multiselect("Select columns", string_columns)
                     if column_select:
                         records = []
@@ -57,7 +57,7 @@ if action == "✍️ Upload Dataset":
                                 inputs={col: row[col] for col in column_select}
                             )
                             records.append(record)
-                elif dataset_type == "Token Classification":
+                elif dataset_type == "TokenClassification":
                     column_select = st.selectbox("Select a Column", string_columns)
                     if column_select:
                         # Load the spaCy en_core_web_sm model
@@ -90,20 +90,24 @@ if action == "✍️ Upload Dataset":
 
 elif action == "💾 Download dataset":
     st.subheader(action)
-    dataset_name_down = st.text_input("Dataset Name", value="", key="dataset_name")
+    datasets_list = [f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list()]
+    dataset_argilla = st.selectbox("Argilla Dataset Name", options=datasets_list)
+    dataset_argilla_name = dataset_argilla.split("/")[-1]
+    dataset_argilla_workspace = dataset_argilla.split("/")[0]
     query = st.text_input(
         "Query to filter records (optional). See [query"
         " syntax](https://docs.argilla.io/en/latest/guides/query_datasets.html)"
     )
     search = st.button("Search")
     if search:
-        dataset = rg.load(dataset_name_down, query=query).to_pandas()
+        rg.set_workspace(dataset_argilla_workspace)
+        dataset = rg.load(dataset_argilla_name, query=query).to_pandas()
         st.write("Dataset preview:", dataset.head())
         cols = st.columns(3)
         cols[0].download_button(
             label="Download as CSV",
             data=dataset.to_csv(index=False).encode("utf-8"),
-            file_name=f"{dataset_name_down}.csv",
+            file_name=f"{dataset_argilla_name}.csv",
             mime="text/csv",
         )
         output = BytesIO()
@@ -114,13 +118,13 @@ elif action == "💾 Download dataset":
             cols[1].download_button(
                 label="Download as Excel",
                 data=output,
-                file_name=f"{dataset_name_down}.xlsx",
+                file_name=f"{dataset_argilla_name}.xlsx",
                 mime="application/vnd.ms-excel",
             )
         cols[2].download_button(
             label="Download as JSON!",
             data=dataset.to_json(orient="records", lines=True).encode("utf-8"),
-            file_name=f"{dataset_name_down}.json",
+            file_name=f"{dataset_argilla_name}.json",
             mime="application/json",
         )
     else:

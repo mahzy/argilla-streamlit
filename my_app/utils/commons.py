@@ -1,7 +1,10 @@
 import os
 
 import argilla as rg
+import httpx
 import streamlit as st
+from argilla.client.api import active_client
+from argilla.client.apis.datasets import __TASK_TO_SETTINGS__
 from huggingface_hub import HfApi
 
 
@@ -84,9 +87,83 @@ def hf_login_flow():
 
 # def record_info():
 #     with st.expander("Dataset Type Info"):
-#         if dataset_type == "Text Classification":
+#         if dataset_type == "TextClassification":
 #             st.write(rg.TextClassificationRecord.__doc__)
-#         elif dataset_type == "Token Classification":
+#         elif dataset_type == "TokenClassification":
 #             st.write(rg.TokenClassificationRecord.__doc__)
 #         else:
 #             st.write(rg.Text2TextRecord.__doc__)
+
+
+def get_dataset_list():
+    client = active_client()._client
+    url = "{}/api/datasets".format(client.base_url)
+
+    response = httpx.get(
+        url=url,
+        headers=client.get_headers(),
+        cookies=client.get_cookies(),
+        timeout=client.get_timeout(),
+    )
+
+    dataset_overview = []
+    for dataset in response.json():
+        metadata = dataset["metadata"].values()
+        if (
+            metadata
+            and not isinstance(list(metadata)[0], str)
+            and not isinstance(list(metadata)[0], int)
+        ):
+            metadata = list(metadata)[0].get(
+                "labels", list(metadata)[0].get("entities")
+            )
+        else:
+            metadata = None
+        dataset_overview.append(
+            {
+                "name": dataset["name"],
+                "task": dataset["task"],
+                "owner": dataset["owner"],
+                "id": dataset["id"],
+                "labels": metadata,
+            }
+        )
+        # if metadata is None:
+        #     # dataset_overview[-1]["labels"] =
+        #     setting = get_dataset_settings(dataset["name"], dataset["task"])
+        #     if setting is not None:
+        #         dataset_overview[-1]["labels"] = list(setting)
+    return dataset_overview
+
+
+def whoami():
+    client = active_client()._client
+    url = "{}/api/me".format(client.base_url)
+    response = httpx.get(
+        url=url,
+        headers=client.get_headers(),
+        cookies=client.get_cookies(),
+        timeout=client.get_timeout(),
+    )
+    return {**response.json()}
+
+
+def get_dataset_settings(dataset_name, dataset_task):
+    client = active_client()._client
+    url = f"{client.base_url}/api/datasets/{dataset_task}/{dataset_name}/settings"
+    response = httpx.get(
+        url=url,
+        headers=client.get_headers(),
+        cookies=client.get_cookies(),
+        timeout=client.get_timeout(),
+    )
+
+    try:
+        response.raise_for_status()
+        return (
+            __TASK_TO_SETTINGS__.get(dataset_task)
+            .from_dict(response.json())
+            .label_schema
+        )
+    except Exception:
+        return None

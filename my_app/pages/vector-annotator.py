@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from streamlit_plotly_events import plotly_events
 from streamlit_tags import st_tags
 from umap import UMAP
-from utils.commons import argilla_login_flow
+from utils.commons import argilla_login_flow, get_dataset_list
 
 st.set_page_config(
     page_title="Argilla - Vector Annotator",
@@ -32,8 +32,23 @@ st.write(
     """
 )
 
-dataset_argilla = st.text_input("Argilla Dataset Name", "ray-summit")
-labels = st_tags(label="Labels", text="Press enter to add more")
+datasets_list = [f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list()]
+dataset_argilla = st.selectbox("Argilla Dataset Name", options=datasets_list)
+dataset_argilla_name = dataset_argilla.split("/")[-1]
+dataset_argilla_workspace = dataset_argilla.split("/")[0]
+rg.set_workspace(dataset_argilla_workspace)
+labels = []
+
+for dataset in get_dataset_list():
+    if (
+        dataset["name"] == dataset_argilla_name
+        and dataset["owner"] == dataset_argilla_workspace
+    ):
+        labels = dataset["labels"]
+        if dataset["task"] != "TextClassification":
+            st.warning("Only TextClassificationRecord is supported")
+            st.stop()
+labels = st_tags(label="Labels", value=labels, text="Press enter to add more")
 
 st.info(
     "Information is cached but it is recommended to use a subset of the data through"
@@ -49,23 +64,20 @@ n_records = st.number_input(
 )
 query = st.text_input("Query")
 
-if dataset_argilla and labels:
+if dataset_argilla_name and labels:
 
     @st.cache(allow_output_mutation=True)
-    def load_dataset(dataset_argilla, query, fast_mode, limit):
+    def load_dataset(dataset_argilla_name, query, fast_mode, limit):
         if query and query is not None:
             query = f"({query}) AND vectors: *"
         else:
             query = "vectors: *"
 
-        ds = rg.load(dataset_argilla, query=query, limit=limit)
+        ds = rg.load(dataset_argilla_name, query=query, limit=limit)
         df = ds.to_pandas()
 
         if df.empty:
             st.warning("No dataset found")
-            st.stop()
-        if not isinstance(ds[0], rg.TextClassificationRecord):
-            st.warning("Only TextClassificationRecord is supported")
             st.stop()
         vectors = df.vectors.values
         if len(list(vectors[0].keys())) > 1:
@@ -93,7 +105,7 @@ if dataset_argilla and labels:
         df["formatted_text"] = sentencized_text
         return df, ds
 
-    df, ds = load_dataset(dataset_argilla, query, fast, n_records)
+    df, ds = load_dataset(dataset_argilla_name, query, fast, n_records)
     fig = px.scatter(
         data_frame=df,
         x="x",
