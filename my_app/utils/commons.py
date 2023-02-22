@@ -45,6 +45,8 @@ def argilla_login_flow(title: str) -> str:
                 api_url=api_url,
                 api_key=api_key,
             )
+            os.environ["ARGILLA_API_URL"] = api_url
+            os.environ["ARGILLA_API_KEY"] = api_key
             st.success(
                 f"Logged in at {api_url}, and workspace is {rg.get_workspace()}. Set"
                 " `ARGILLA_API_URL` and `ARGILLA_API_KEY` as environment variables to"
