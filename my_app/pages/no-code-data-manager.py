@@ -31,59 +31,62 @@ if action == "✍️ Upload Dataset":
         "Dataset Type", ["Text Classification", "Token Classification", "Text2Text"]
     )
 
-    dataset_name = st.text_input("Dataset Name", value="", key="dataset_name")
+    dataset_name = st.text_input("Dataset Name", key="dataset_name")
 
-    records = []
-    uploaded_file = st.file_uploader(
-        "Upload your CSV or XLSX/XLS file", type=["csv", "xls", "xlsx"]
-    )
+    if dataset_name is not None and dataset_name.strip() != "":
+        records = []
+        uploaded_file = st.file_uploader(
+            "Upload your CSV or XLSX/XLS file", type=["csv", "xls", "xlsx"]
+        )
 
-    if uploaded_file is not None:
-        try:
-            df = pd.read_excel(uploaded_file, sheet_name=0)
-        except Exception:
-            df = pd.read_csv(uploaded_file)
+        if uploaded_file is not None:
+            try:
+                df = pd.read_excel(uploaded_file, sheet_name=0)
+            except Exception:
+                df = pd.read_csv(uploaded_file)
 
-        st.write("Dataset preview:", df.head())
-        string_columns = [col for col in df.columns if df[col].dtype == "object"]
-        if len(string_columns) > 0:
-            if dataset_type == "Text Classification":
-                column_select = st.multiselect("Select columns", string_columns)
-                if column_select:
-                    records = []
-                    for i, row in df[column_select].iterrows():
-                        record = rg.TextClassificationRecord(
-                            inputs={col: row[col] for col in column_select}
+            st.write("Dataset preview:", df.head())
+            string_columns = [col for col in df.columns if df[col].dtype == "object"]
+            if len(string_columns) > 0:
+                if dataset_type == "Text Classification":
+                    column_select = st.multiselect("Select columns", string_columns)
+                    if column_select:
+                        records = []
+                        for i, row in df[column_select].iterrows():
+                            record = rg.TextClassificationRecord(
+                                inputs={col: row[col] for col in column_select}
+                            )
+                            records.append(record)
+                elif dataset_type == "Token Classification":
+                    column_select = st.selectbox("Select a Column", string_columns)
+                    if column_select:
+                        # Load the spaCy en_core_web_sm model
+                        nlp = spacy.blank("en")
+                        # Create a new column in the DataFrame with the tokenized text
+                        df["tokenized_text"] = df[column_select].apply(
+                            lambda x: [token.text for token in nlp(x)]
                         )
-                        records.append(record)
-            elif dataset_type == "Token Classification":
-                column_select = st.selectbox("Select a Column", string_columns)
-                if column_select:
-                    # Load the spaCy en_core_web_sm model
-                    nlp = spacy.blank("en")
-                    # Create a new column in the DataFrame with the tokenized text
-                    df["tokenized_text"] = df[column_select].apply(
-                        lambda x: [token.text for token in nlp(x)]
-                    )
-                    st.write("Tokenized Text:", df["tokenized_text"].head(3))
-                    for i, row in df.iterrows():
-                        record = rg.TokenClassificationRecord(
-                            text=row[column_select],
-                            tokens=row["tokenized_text"],
-                        )
-                        records.append(record)
-            else:
-                column_select = st.selectbox("Select a Column", string_columns)
-                if column_select:
-                    records = []
-                    for i, row in df[column_select].iterrows():
-                        record = rg.Text2TextRecord(text=row[column_select])
-                        records.append(record)
-            if len(records) > 0:
-                if st.button("Log data into Argilla"):
-                    output = rg.log(records=records, name=dataset_name)
-                    st.write(output)
-                    st.write(f"{output.processed} records added to {api_url}")
+                        st.write("Tokenized Text:", df["tokenized_text"].head(3))
+                        for i, row in df.iterrows():
+                            record = rg.TokenClassificationRecord(
+                                text=row[column_select],
+                                tokens=row["tokenized_text"],
+                            )
+                            records.append(record)
+                else:
+                    column_select = st.selectbox("Select a Column", string_columns)
+                    if column_select:
+                        records = []
+                        for i, row in df[column_select].iterrows():
+                            record = rg.Text2TextRecord(text=row[column_select])
+                            records.append(record)
+                if len(records) > 0:
+                    if st.button("Log data into Argilla"):
+                        output = rg.log(records=records, name=dataset_name)
+                        st.write(output)
+                        st.write(f"{output.processed} records added to {api_url}")
+    else:
+        st.warning("Please provide a dataset name")
 
 elif action == "💾 Download dataset":
     st.subheader(action)
