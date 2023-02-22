@@ -38,7 +38,7 @@ def argilla_login_flow(title: str) -> str:
     else:
         try:
             api_url = st.sidebar.text_input(
-                "API URL", "https://dvilasuero-argilla-template-space.hf.space"
+                "API URL", "https://argilla-live-demo.hf.space"
             )
             api_key = st.sidebar.text_input("API Key", value="team.apikey")
             rg.init(
@@ -107,6 +107,7 @@ def get_dataset_list():
             timeout=client.get_timeout(),
         )
         response.raise_for_status()
+        response.json()
     except Exception:
         url = "{}/api/datasets/".format(client.base_url)
 
