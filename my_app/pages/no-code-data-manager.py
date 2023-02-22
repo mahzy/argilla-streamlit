@@ -6,7 +6,7 @@ import spacy
 import streamlit as st
 import streamlit_analytics
 import xlsxwriter
-from utils.commons import argilla_login_flow, get_dataset_list
+from utils.commons import ArgillaSingleton, argilla_login_flow, get_dataset_list
 
 st.set_page_config(
     page_title="Argilla NoCode Data Manager", page_icon="💾", layout="wide"
@@ -27,13 +27,36 @@ action = st.sidebar.selectbox("Action", ["✍️ Upload Dataset", "💾 Download
 
 if action == "✍️ Upload Dataset":
     st.subheader(action)
-    dataset_type = st.selectbox(
-        "Dataset Type", ["TextClassification", "TokenClassification", "Text2Text"]
+    datasets_list = [
+        f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list(api_url, api_key)
+    ]
+    dataset_argilla = st.selectbox(
+        "Argilla Dataset Name", options=["other"] + datasets_list
     )
+    if dataset_argilla == "other":
+        ArgillaSingleton.init(api_url, api_key)
+        dataset_argilla_name = st.text_input("New Dataset Name")
+        labels = []
+        disabled = False
+        options = ["TextClassification", "TokenClassification", "Text2Text"]
+    else:
+        dataset_argilla_name = dataset_argilla.split("/")[-1]
+        dataset_argilla_workspace = dataset_argilla.split("/")[0]
+        rg.set_workspace(dataset_argilla_workspace)
+        for dataset in get_dataset_list(api_url, api_key):
+            if (
+                dataset["name"] == dataset_argilla_name
+                and dataset["owner"] == dataset_argilla_workspace
+            ):
+                labels = dataset["labels"]
+                dataset_type = dataset["task"]
+                disabled = True
+                options = [dataset_type]
+                break
 
-    dataset_name = st.text_input("Dataset Name", key="dataset_name")
+    dataset_type = st.selectbox("Dataset Type", options, disabled=disabled)
 
-    if dataset_name is not None and dataset_name.strip() != "":
+    if dataset_argilla_name is not None and dataset_argilla_name.strip() != "":
         records = []
         uploaded_file = st.file_uploader(
             "Upload your CSV or XLSX/XLS file", type=["csv", "xls", "xlsx"]
@@ -82,7 +105,7 @@ if action == "✍️ Upload Dataset":
                             records.append(record)
                 if len(records) > 0:
                     if st.button("Log data into Argilla"):
-                        output = rg.log(records=records, name=dataset_name)
+                        output = rg.log(records=records, name=dataset_argilla_name)
                         st.write(output)
                         st.write(f"{output.processed} records added to {api_url}")
     else:
