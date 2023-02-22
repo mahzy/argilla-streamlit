@@ -62,7 +62,10 @@ n_records = st.number_input(
     max_value=10000,
     value=2000,
 )
-query = st.text_input("Query")
+query = st.text_input(
+    "Query to filter records (optional). See [query"
+    " syntax](https://docs.argilla.io/en/latest/guides/query_datasets.html)",
+)
 
 if dataset_argilla_name and labels:
 

@@ -44,7 +44,11 @@ if dataset_argilla:
         f"{target_namespace}/{dataset_argilla_name}",
     )
     try:
-        query = st.text_input("Query", value="status: Validated")
+        query = st.text_input(
+            "Query to filter records (optional). See [query"
+            " syntax](https://docs.argilla.io/en/latest/guides/query_datasets.html)",
+            value="status: Validated",
+        )
         with st.spinner(text="Loading dataset..."):
             rg.set_workspace(dataset_argilla_workspace)
             ds = rg.load(dataset_argilla_name, query=query)
