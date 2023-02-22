@@ -14,7 +14,7 @@ st.set_page_config(
 
 streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
 
-argilla_login_flow("Hub Exporter")
+api_url, api_key = argilla_login_flow("Hub Exporter")
 
 st.write(
     """
@@ -28,7 +28,9 @@ hf_auth_token, api = hf_login_flow()
 
 user_info = api.whoami()
 namespaces = [user_info["name"]] + [org["name"] for org in user_info["orgs"]]
-datasets_list = [f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list()]
+datasets_list = [
+    f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list(api_url, api_key)
+]
 dataset_argilla = st.selectbox("Argilla Dataset Name", options=datasets_list)
 dataset_argilla_name = dataset_argilla.split("/")[-1]
 dataset_argilla_workspace = dataset_argilla.split("/")[0]

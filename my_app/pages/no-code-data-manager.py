@@ -14,7 +14,7 @@ st.set_page_config(
 
 streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
 
-api_url = argilla_login_flow("No-code data manager")
+api_url, api_key = argilla_login_flow("No-code data manager")
 
 st.write(
     """
@@ -90,7 +90,9 @@ if action == "✍️ Upload Dataset":
 
 elif action == "💾 Download dataset":
     st.subheader(action)
-    datasets_list = [f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list()]
+    datasets_list = [
+        f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list(api_url, api_key)
+    ]
     dataset_argilla = st.selectbox("Argilla Dataset Name", options=datasets_list)
     dataset_argilla_name = dataset_argilla.split("/")[-1]
     dataset_argilla_workspace = dataset_argilla.split("/")[0]

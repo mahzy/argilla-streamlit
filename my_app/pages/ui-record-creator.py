@@ -6,7 +6,7 @@ import streamlit as st
 import streamlit_analytics
 from streamlit_tags import st_tags
 from text_highlighter import text_highlighter
-from utils.commons import argilla_login_flow, get_dataset_list
+from utils.commons import ArgillaSingleton, argilla_login_flow, get_dataset_list
 
 st.set_page_config(
     page_title="Argilla - UI record creator",
@@ -16,7 +16,7 @@ st.set_page_config(
 
 streamlit_analytics.start_tracking(load_from_json=f"{__file__}.json")
 
-argilla_login_flow("UI record creator")
+api_url, api_key = argilla_login_flow("UI record creator")
 
 st.write(
     """
@@ -26,12 +26,14 @@ st.write(
 )
 
 nlp = spacy.blank("en")
-datasets_list = [f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list()]
+datasets_list = [
+    f"{ds['owner']}/{ds['name']}" for ds in get_dataset_list(api_url, api_key)
+]
 dataset_argilla = st.selectbox(
     "Argilla Dataset Name", options=["other"] + datasets_list
 )
 if dataset_argilla == "other":
-    rg.init()
+    ArgillaSingleton.init(api_url, api_key)
     dataset_argilla_name = st.text_input("New Dataset Name")
     labels = []
     disabled = False
@@ -40,7 +42,7 @@ else:
     dataset_argilla_name = dataset_argilla.split("/")[-1]
     dataset_argilla_workspace = dataset_argilla.split("/")[0]
     rg.set_workspace(dataset_argilla_workspace)
-    for dataset in get_dataset_list():
+    for dataset in get_dataset_list(api_url, api_key):
         if (
             dataset["name"] == dataset_argilla_name
             and dataset["owner"] == dataset_argilla_workspace

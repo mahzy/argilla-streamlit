@@ -3,7 +3,7 @@ import os
 import argilla as rg
 import httpx
 import streamlit as st
-from argilla.client.api import active_client
+from argilla.client.api import ArgillaSingleton, active_client
 from argilla.client.apis.datasets import __TASK_TO_SETTINGS__
 from huggingface_hub import HfApi
 
@@ -33,7 +33,7 @@ def argilla_login_flow(title: str) -> str:
         )
         st.success(
             f"Logged in at {os.environ.get('ARGILLA_API_URL')}, and workspace is"
-            f" {rg.get_workspace()}"
+            f" {rg.get_workspace()}. Change `ARGILLA_API_URL` and `ARGILLA_API_KEY` as"
         )
     else:
         try:
@@ -45,8 +45,7 @@ def argilla_login_flow(title: str) -> str:
                 api_url=api_url,
                 api_key=api_key,
             )
-            os.environ["ARGILLA_API_URL"] = api_url
-            os.environ["ARGILLA_API_KEY"] = api_key
+
             st.success(
                 f"Logged in at {api_url}, and workspace is {rg.get_workspace()}. Set"
                 " `ARGILLA_API_URL` and `ARGILLA_API_KEY` as environment variables to"
@@ -59,7 +58,7 @@ def argilla_login_flow(title: str) -> str:
                 " variables to avoid this step."
             )
     st.title(title)
-    return api_url
+    return api_url, api_key
 
 
 def hf_login_flow():
@@ -97,8 +96,8 @@ def hf_login_flow():
 #             st.write(rg.Text2TextRecord.__doc__)
 
 
-def get_dataset_list():
-    client = active_client()._client
+def get_dataset_list(api_url, api_key):
+    client = ArgillaSingleton.init(api_url, api_key)._client
     try:
         url = "{}/api/datasets".format(client.base_url)
 
