@@ -9,6 +9,7 @@ from streamlit_plotly_events import plotly_events
 from streamlit_tags import st_tags
 from umap import UMAP
 from utils.commons import argilla_login_flow, get_dataset_list
+import pandas as pd
 
 st.set_page_config(
     page_title="Argilla - Vector Annotator",
@@ -40,6 +41,9 @@ dataset_argilla_name = dataset_argilla.split("/")[-1]
 dataset_argilla_workspace = dataset_argilla.split("/")[0]
 rg.set_workspace(dataset_argilla_workspace)
 labels = []
+
+st.info(dataset_argilla_name)
+st.info(dataset_argilla_workspace)
 
 for dataset in get_dataset_list(api_url, api_key):
     if (
@@ -73,35 +77,42 @@ if dataset_argilla_name and labels:
 
     @st.cache(allow_output_mutation=True)
     def load_dataset(dataset_argilla_name, query, fast_mode, limit):
+        # if query and query is not None:
+        #     query = f"({query}) AND vectors: *"
+        # else:
+        #     query = "vectors: *"
+
         if query and query is not None:
-            query = f"({query}) AND vectors: *"
+            query = f"({query})"
         else:
-            query = "vectors: *"
+            query = ""
 
         ds = rg.load(dataset_argilla_name, query=query, limit=limit)
+        st.info(len(ds))
         df = ds.to_pandas()
 
         if df.empty:
             st.warning("No dataset found")
-            st.stop()
-        vectors = df.vectors.values
-        if len(list(vectors[0].keys())) > 1:
-            vector_name = st.selectbox("Select vector", list(vectors[0].keys()))
-        else:
-            vector_name = list(vectors[0].keys())[0]
-        vectors = np.array([v[vector_name] for v in vectors])
+        #     st.stop()
+        # vectors = df.vectors.values
+        # if len(list(vectors[0].keys())) > 1:
+        #     vector_name = st.selectbox("Select vector", list(vectors[0].keys()))
+        # else:
+        #     vector_name = list(vectors[0].keys())[0]
+        # vectors = np.array([v[vector_name] for v in vectors])
 
-        if fast_mode:
-            # Reduce the dimensions with UMAP
-            umap = UMAP()
-            X_tfm = umap.fit_transform(vectors)
-        else:
-            pca = PCA(n_components=2)
-            X_tfm = pca.fit_transform(vectors)
+        # if fast_mode:
+        #     # Reduce the dimensions with UMAP
+        #     umap = UMAP()
+        #     X_tfm = umap.fit_transform(vectors)
+        # else:
+        #     pca = PCA(n_components=2)
+        #     X_tfm = pca.fit_transform(vectors)
 
         # # Apply coordinates
-        df["x"] = X_tfm[:, 0]
-        df["y"] = X_tfm[:, 1]
+        df["x"] = [o["x"] for o in df.metadata]
+        df["y"] = [o["y"] for o in df.metadata]
+        df["topic"] = [o["topic"] for o in df.metadata]
 
         sentencized_docs = nlp.pipe(df.text.values)
         sentencized_text = [
@@ -111,13 +122,16 @@ if dataset_argilla_name and labels:
         return df, ds
 
     df, ds = load_dataset(dataset_argilla_name, query, fast, n_records)
+    # ds = rg.load(dataset_argilla_name, limit=10)
+    # df = pd.read_csv("./data/topics_world_cup_final.csv", usecols=["formatted_text","metadata","x", "y"])
+
     fig = px.scatter(
         data_frame=df,
         x="x",
         y="y",
         hover_data={
             "formatted_text": True,
-            "prediction": True,
+            "topic": True,
             "annotation": True,
             "x": False,
             "y": False,
@@ -142,8 +156,9 @@ if dataset_argilla_name and labels:
 
         if st.button("Annotate"):
             df_new["annotation"] = annotation
+            df_new["status"] = "Validated"
             ds_update = rg.read_pandas(df_new, task="TextClassification")
-            rg.log(ds_update, api_url=api_url)
+            rg.log(ds_update, name=dataset_argilla_name)
     else:
         st.warning("No point selected")
 else:

@@ -133,15 +133,18 @@ def get_dataset_list(api_url, api_key):
             )
         else:
             metadata = None
-        dataset_overview.append(
-            {
-                "name": dataset["name"],
-                "task": dataset["task"],
-                "owner": dataset["owner"],
-                "id": dataset["id"],
-                "labels": metadata,
-            }
-        )
+        try:
+            dataset_overview.append(
+                {
+                    "name": dataset["name"],
+                    "task": dataset["task"],
+                    "owner": dataset["owner"],
+                    "id": dataset["id"],
+                    "labels": metadata,
+                }
+            )
+        except KeyError:
+            pass
         # if metadata is None:
         #     # dataset_overview[-1]["labels"] =
         #     setting = get_dataset_settings(dataset["name"], dataset["task"])
