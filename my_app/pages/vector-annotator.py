@@ -65,7 +65,7 @@ fast = st.checkbox("Fast mode (PCA) or accurate mode (UMAP)", value=True)
 n_records = st.number_input(
     "Max number of records to query and analyze",
     min_value=1000,
-    max_value=10000,
+    max_value=50000,
     value=2000,
 )
 query = st.text_input(
